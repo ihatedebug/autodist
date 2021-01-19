@@ -78,6 +78,7 @@ class Var:
             ret = sparse_data_size * self.var_size / self.original_var_size
             return ret
 
+
 class Partition(Var):
     def __init__(self,
                  name=None,
@@ -260,7 +261,7 @@ class SimulatorBase:
         resource = self.setup_resource(resource_spec, cluster, device_resolver)
 
         name2var = {var.name: var for var_op, var in self._original_graph_item.trainable_var_op_to_var.items()}
-
+        #print("name2var", name2var)
         meta = defaultdict()
         for node in strategy.node_config:
             var_name = node.var_name
@@ -269,7 +270,6 @@ class SimulatorBase:
             #         break
             var = name2var[var_name]
             var_helper = VariableHelper(var, self._original_graph_item)
-
             if node.partitioner:
                 pc = PartitionerConfig(partition_str=node.partitioner)
                 for i, part in enumerate(node.part_config):
@@ -393,6 +393,7 @@ class SimulatorBase:
                     network_bandwidth[resolved_devices[j]] = {}
                 ip_i = devices[i].split(':')[0]
                 ip_j = devices[j].split(':')[0]
+                #print(resource_spec)
                 if ip_i != ip_j:
                     network_bandwidth[resolved_devices[i]][resolved_devices[j]] \
                         = GIGABITS * resource_spec.network_bandwidth[ip_i]    # todo: solve.

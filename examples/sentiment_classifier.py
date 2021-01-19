@@ -9,7 +9,7 @@ from autodist import AutoDist
 from autodist.strategy import PS, PSLoadBalancing, PartitionedPS, AllReduce, Parallax
 
 resource_spec_file = os.path.join(os.path.dirname(__file__), 'resource_spec.yml')
-autodist = AutoDist(resource_spec_file, PartitionedPS())
+autodist = AutoDist(resource_spec_file, Parallax())
 
 vocab_size = 10000
 embedding_size = 16

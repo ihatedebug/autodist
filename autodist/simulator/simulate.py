@@ -8,15 +8,15 @@ from autodist.resource_spec import ResourceSpec
 
 from pathlib import Path
 
-GRAPH_ITEM_DIR = f'{str(Path.home())}/graph_items'
-SIMULATION_DATA_DIR = f'{str(Path.home())}/autosync_dataset_release'
+GRAPH_ITEM_DIR = f'/tmp/autodist/original-graph'
+SIMULATION_DATA_DIR = f'{str(Path.home())}/autosync_dataset_release/vgg16'
 CHECKPOINT_DIR =  f'{str(Path.home())}'
 
-
-resource_spec_file = f'{SIMULATION_DATA_DIR}/cluster1/bert12l_aws4_from_bert3l_aws4_2/resource_spec.yml'
-original_graph_item_path = f'{GRAPH_ITEM_DIR}/bert_original_graph_item_large'
-checkpoint_path = f'{CHECKPOINT_DIR}/bert_predefined_checkpoints/ckpV1_bert_orca_100_0.67000_0.50000'
-strategy_dir = f'{SIMULATION_DATA_DIR}/cluster1/bert12l_aws4_from_bert3l_aws4_2/strategies'
+#TODO: change to vgg
+resource_spec_file = f'{SIMULATION_DATA_DIR}/cluster1/vgg16_aws_4_pure_random/resource_spec.yml'
+original_graph_item_path = '/tmp/autodist/original-graph'
+checkpoint_path = '/home/jongho/vgg16_predefined_checkpoints/ckpV1_vgg_aws_100_0.78375_0.76375'
+strategy_dir = f'{SIMULATION_DATA_DIR}/cluster1/vgg16_aws_4_pure_random/strategies'
 strategy_files = glob.glob(f'{strategy_dir}/*')
 strategy_file = strategy_files[0]
 

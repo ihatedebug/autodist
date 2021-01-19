@@ -127,15 +127,16 @@ class PredefinedSimulator(SimulatorBase):
 
 		vars, resource = self.extract_pre_feature(strategy=strategy, resource_spec=resource_spec,
 		                                          cluster=cluster, device_resolver=device_resolver)
-
+		#print("vars: ", len(vars))
 		feature_keys = ['transmission', 'network_overhead', 'gpu_kernel_memory_latency']
 		device_ps_sync_time = {}
 		group_ar_sync_time = {}
-
 		for var_name, var in vars.items():
+			#print("var_name, var", var_name, var) #fc2/kernel/part_18:0 <models.base.Partition object at 0x7f1369cc68d0>
 			if isinstance(var.synchronizer, PSSynchronizer):
 				sync_time = self.var_ps_time(var, resource)
 				device = vars[var_name].device
+				#print("device", device)  #/job:worker/task:1/device:CPU:0
 				if device not in device_ps_sync_time:
 					device_ps_sync_time[device] = {key: 0.0 for key in feature_keys}
 				for key in feature_keys:
@@ -154,17 +155,23 @@ class PredefinedSimulator(SimulatorBase):
 		sum_device_ps_sync_time = {key: 0.0 for key in feature_keys}
 		max_group_ar_sync_time = {key: 0.0 for key in feature_keys}
 		sum_group_ar_sync_time = {key: 0.0 for key in feature_keys}
+		#print("device_ps_sync_time.values()", device_ps_sync_time.values()) #
+		# {'transmission': 0.00408949248, 'network_overhead': 105.0, 'gpu_kernel_memory_latency': 420.0} 이 device개수만큼 = variable partition
+		#print("group_ar_sync_time.values()", group_ar_sync_time.values())
 		for key in feature_keys:
 			max_device_ps_sync_time[key] = max([d[key] for d in device_ps_sync_time.values()] or [0.0])
 			sum_device_ps_sync_time[key] = sum([d[key] for d in device_ps_sync_time.values()] or [0.0])
 			max_group_ar_sync_time[key] = max([d[key] for d in group_ar_sync_time.values()] or [0.0])
 			sum_group_ar_sync_time[key] = sum([d[key] for d in group_ar_sync_time.values()] or [0.0])
-
+		#print(max_device_ps_sync_time)
+		#print(sum_device_ps_sync_time)
+		#print(max_group_ar_sync_time)
+		#print(sum_group_ar_sync_time)
 		feat = [max_device_ps_sync_time[key] for key in feature_keys] \
 			   + [sum_device_ps_sync_time[key] for key in feature_keys] \
 			   + [max_group_ar_sync_time[key] for key in feature_keys] \
 			   + [sum_group_ar_sync_time[key] for key in feature_keys]
-
+		#print("feat", feat)  위에 4개가 concat 됨
 		return feat
 
 	def predefined_sync_time(self, strategy, resource_spec):
@@ -192,13 +199,12 @@ class PredefinedSimulator(SimulatorBase):
 			# TODO(Hao): didn't consider any parallelization among partitions
 			for k, worker in enumerate(worker_list):
 				if resolved_devices_on_diff_machine(var.device, worker):
-					if var.is_sparse:
+					if var.is_sparse:   # vgg일 때 이런 경우 없음
 						this_worker_size = get_sparse_var_bits(var_size_to_transfer) * worker_num_replicas[k]
 					else:
 						this_worker_size = get_dense_var_bits(var_size_to_transfer, var.dtype)
 					this_server_time += this_worker_size / resource.network_bandwidth[var.device][worker]
-
-			if self._get_coef:
+			if self._get_coef:  # 설정상 항상 true
 				return {
 					'transmission': this_server_time,
 					'network_overhead': len(worker_list),
@@ -235,8 +241,51 @@ class PredefinedSimulator(SimulatorBase):
 				receive_time = _helper(resource.cpu_worker_list)
 			else:
 				receive_time = _helper(resource.gpu_worker_list)
-
+		#print(send_time,'------------' ,receive_time)
 		return send_time, receive_time
+	'''
+	{'transmission': 0.0075890688, 'network_overhead': 4, 'gpu_kernel_memory_latency': 4, 'constant': 1.0,
+	 'var_name': 'fc1/kernel/part_5:0', 'strategy': 'ps', 'local_proxy': False, 'is_sparse': False,
+	 'size_to_transfer': 3952640, 'dtype': "<dtype: 'float32'>",
+	 'worker_list': ['/job:worker/task:2/device:CPU:0', '/job:worker/task:1/device:CPU:0',
+					 '/job:worker/task:3/device:CPU:0', '/job:worker/task:0/device:CPU:0'],
+	 'cpu_worker_list': ['/job:worker/task:2/device:CPU:0', '/job:worker/task:1/device:CPU:0',
+						 '/job:worker/task:3/device:CPU:0', '/job:worker/task:0/device:CPU:0'],
+	 'gpu_worker_list': ['/job:worker/task:2/device:GPU:0', '/job:worker/task:2/device:GPU:1',
+						 '/job:worker/task:2/device:GPU:2', '/job:worker/task:2/device:GPU:3',
+						 '/job:worker/task:1/device:GPU:0', '/job:worker/task:1/device:GPU:1',
+						 '/job:worker/task:1/device:GPU:2', '/job:worker/task:1/device:GPU:3',
+						 '/job:worker/task:3/device:GPU:0', '/job:worker/task:3/device:GPU:1',
+						 '/job:worker/task:3/device:GPU:2', '/job:worker/task:3/device:GPU:3',
+						 '/job:worker/task:0/device:GPU:0', '/job:worker/task:0/device:GPU:1',
+						 '/job:worker/task:0/device:GPU:2', '/job:worker/task:0/device:GPU:3'],
+	 'worker_num_replicas': [1.0, 1.0, 1.0, 1.0], 
+	 'max_num_local_replica': 4, 'is_ps': True}
+	
+	{'transmission': 0.030356275199999994, 'network_overhead': 16, 'gpu_kernel_memory_latency': 4, 'constant': 1.0,
+	 'var_name': 'fc1/kernel/part_5:0', 'strategy': 'ps', 'local_proxy': False, 'is_sparse': False,
+	 'size_to_transfer': 3952640, 'dtype': "<dtype: 'float32'>",
+	 'worker_list': ['/job:worker/task:2/device:GPU:0', '/job:worker/task:2/device:GPU:1',
+					 '/job:worker/task:2/device:GPU:2', '/job:worker/task:2/device:GPU:3',
+					 '/job:worker/task:1/device:GPU:0', '/job:worker/task:1/device:GPU:1',
+					 '/job:worker/task:1/device:GPU:2', '/job:worker/task:1/device:GPU:3',
+					 '/job:worker/task:3/device:GPU:0', '/job:worker/task:3/device:GPU:1',
+					 '/job:worker/task:3/device:GPU:2', '/job:worker/task:3/device:GPU:3',
+					 '/job:worker/task:0/device:GPU:0', '/job:worker/task:0/device:GPU:1',
+					 '/job:worker/task:0/device:GPU:2', '/job:worker/task:0/device:GPU:3'],
+	 'cpu_worker_list': ['/job:worker/task:2/device:CPU:0', '/job:worker/task:1/device:CPU:0',
+						 '/job:worker/task:3/device:CPU:0', '/job:worker/task:0/device:CPU:0'],
+	 'gpu_worker_list': ['/job:worker/task:2/device:GPU:0', '/job:worker/task:2/device:GPU:1',
+						 '/job:worker/task:2/device:GPU:2', '/job:worker/task:2/device:GPU:3',
+						 '/job:worker/task:1/device:GPU:0', '/job:worker/task:1/device:GPU:1',
+						 '/job:worker/task:1/device:GPU:2', '/job:worker/task:1/device:GPU:3',
+						 '/job:worker/task:3/device:GPU:0', '/job:worker/task:3/device:GPU:1',
+						 '/job:worker/task:3/device:GPU:2', '/job:worker/task:3/device:GPU:3',
+						 '/job:worker/task:0/device:GPU:0', '/job:worker/task:0/device:GPU:1',
+						 '/job:worker/task:0/device:GPU:2', '/job:worker/task:0/device:GPU:3'],
+	 'worker_num_replicas': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+	 'max_num_local_replica': 4, 'is_ps': True}
+	'''
 
 	def var_ar_time(self, var, resource, network_overhead=0.0, gpu_kernel_memory_latency=0.0):
 		"""Compute synchronization time of a variable in AR strategy."""
@@ -311,68 +360,3 @@ class PredefinedSimulator(SimulatorBase):
 		else:
 			return time + network_overhead * len(worker_list) \
 				   + gpu_kernel_memory_latency * resource.max_num_local_replica
-
-
-
-	# @staticmethod
-	# def var_ps_time(var_name, is_sparse, local_proxy, server_list, cpu_worker_list, gpu_worker_list,
-	#				 max_num_local_replica, worker_num_replicas, network_bandwidth, get_coef,
-	#				 network_overhead=0.0, gpu_kernel_memory_latency=0.0):
-	#	 """Compute synchrinzation time of a variable in PS strategy."""
-	#
-	#	 def _helper(worker_list, worker_num_replicas=None):
-	#		 if worker_num_replicas is None:
-	#			 worker_num_replicas = [1.0] * len(worker_list)
-	#		 # Compute the slowest server
-	#		 slowest_server_time = 0
-	#		 for j, server in enumerate(server_list):
-	#			 if server.size_to_transfer == 0:
-	#				 continue
-	#			 # network transfer: sum up all workers time. equals to the time cost of this server.
-	#			 this_server_time = 0
-	#			 for k, worker in enumerate(worker_list):
-	#				 if _resolved_devices_on_diff_machine(server.device, worker):
-	#					 if is_sparse:
-	#						 this_worker_size = get_sparse_var_bits(server.size_to_transfer) * worker_num_replicas[k]
-	#					 else:
-	#						 this_worker_size = get_dense_var_bits(server.size_to_transfer, server.dtype)
-	#					 this_server_time += this_worker_size / network_bandwidth[server.device][worker]
-	#			 slowest_server_time = max(slowest_server_time, this_server_time)
-	#
-	#		 if get_coef:
-	#			 return {
-	#				 'transmission': slowest_server_time,
-	#				 'network_overhead': len(worker_list),
-	#				 'gpu_kernel_memory_latency': max_num_local_replica,
-	#				 'constant': 1.0,
-	#				 # possible affecting factors.
-	#				 'var_name': var_name,
-	#				 'strategy': 'ps',
-	#				 'local_proxy': local_proxy,
-	#				 'is_sparse': is_sparse,
-	#				 'server_list': [partition.to_dict() for partition in server_list],
-	#				 'worker_list': worker_list,
-	#				 'cpu_worker_list': cpu_worker_list,
-	#				 'gpu_worker_list': gpu_worker_list,
-	#				 'worker_num_replicas': worker_num_replicas,
-	#				 'max_num_local_replica': max_num_local_replica,
-	#			 }
-	#		 else:
-	#			 return slowest_server_time + len(worker_list) * network_overhead + \
-	#					gpu_kernel_memory_latency * max_num_local_replica
-	#
-	#	 if is_sparse:
-	#		 send_time = _helper(cpu_worker_list, worker_num_replicas=worker_num_replicas)
-	#		 receive_time = _helper(gpu_worker_list)
-	#	 else:
-	#		 send_time = _helper(cpu_worker_list)
-	#		 if local_proxy:
-	#			 receive_time = _helper(cpu_worker_list)
-	#		 else:
-	#			 receive_time = _helper(gpu_worker_list)
-	#
-	#	 if get_coef:
-	#		 # return {key: send_time[key]+receive_time[key] for key in send_time.keys()}
-	#		 return send_time, receive_time
-	#	 else:
-	#		 return send_time, receive_time

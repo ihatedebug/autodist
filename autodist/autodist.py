@@ -140,6 +140,8 @@ class _GraphModeInterface(_AutoDistInterface):
         strategy = self._build_or_load_strategy()
         self._setup(strategy)  # Put it before transforming to allow multiple works to transform concurrently
         compiled_strategy = self._compile_strategy(strategy)
+        self._original_graph_item.serialize('/tmp/autodist/original-graph')
+        logging.info('original graph item initialized and saved to /tmp/autodist/original-graph')
         graph_transformer = GraphTransformer(
             compiled_strategy=compiled_strategy,
             cluster=self._cluster,

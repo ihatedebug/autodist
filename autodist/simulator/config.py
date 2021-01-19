@@ -1,8 +1,8 @@
 from pathlib import Path
 
 
-GRAPH_ITEM_DIR = f'{str(Path.home())}/graph_items'
-SIMULATION_DATA_DIR = f'{str(Path.home())}/autosync_dataset_release'
+GRAPH_ITEM_DIR = f'/tmp/autodist/original-graph'
+SIMULATION_DATA_DIR = f'{str(Path.home())}/autosync_dataset_release/vgg16'
 CHECKPOINT_DIR =  f'{str(Path.home())}'
 
 
@@ -63,24 +63,24 @@ simulation_params = {
 		'model_batch_size': 32,
 		'model_seq_len': 1,
 		'data_dir': [
-			f'{SIMULATION_DATA_DIR}/cluster1/vgg16_aws4_from_vgg16-orca2aws-421_explore3000',
-			f'{SIMULATION_DATA_DIR}/cluster1/vgg16_aws-4_model-aws-new_rejection-4_explore-3000_sim-weight-0.75',
-			f'{SIMULATION_DATA_DIR}/cluster1/vgg16_aws-4_model-aws-only_rejection-8_explore-3000_sim-weight-0.3',
+		#	f'{SIMULATION_DATA_DIR}/cluster1/vgg16_aws4_from_vgg16-orca2aws-421_explore3000',
+		#	f'{SIMULATION_DATA_DIR}/cluster1/vgg16_aws-4_model-aws-new_rejection-4_explore-3000_sim-weight-0.75',
+		#	f'{SIMULATION_DATA_DIR}/cluster1/vgg16_aws-4_model-aws-only_rejection-8_explore-3000_sim-weight-0.3',
 			f'{SIMULATION_DATA_DIR}/cluster1/vgg16_aws_4_pure_random',
 		],
-		'original_graph_item_path': f'{GRAPH_ITEM_DIR}/vgg16_original_graph_item',
+		'original_graph_item_path': f'{GRAPH_ITEM_DIR}',
 		'save_dir': f'{CHECKPOINT_DIR}/vgg16_predefined_checkpoints',
 		'save_prefix': 'ckpV1_vgg_aws',
 		'baseline': 0.0,
 		'scale': 0.5,
-		'do_train': True,
+		'do_train': False,
 		'do_test': True,
 		'model_version': 'v1',
 		'learning_rate': 0.01,
 		'list_size': 2,
 		'batch_size': 100,
 		'ranking_loss_key': 'pairwise_logistic_loss',
-		'checkpoint': '',
+		'checkpoint': '/home/jongho/vgg16_predefined_checkpoints/ckpV1_vgg_aws_100_0.78375_0.76375',
 	},
 	'resnet101': {
 		'model_batch_size': 32,

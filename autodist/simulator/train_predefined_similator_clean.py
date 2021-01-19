@@ -6,7 +6,7 @@ from os.path import expanduser
 import tqdm
 import os
 os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   # see issue #152
-os.environ["CUDA_VISIBLE_DEVICES"]="1"
+os.environ["CUDA_VISIBLE_DEVICES"]="5"
 import argparse
 import importlib
 import glob 
@@ -105,7 +105,8 @@ class TFRIterator:
 		ys = np.array(ys, dtype=np.float32)
 		if self.split == 'train': # normalize y as its used for loss weights.
 			ys = (ys * self.scale - self.baseline)
-
+		#print("len(xs) : {}, xs shape {}, ys shape {} ".format(len(xs), xs[0].shape, ys.shape))
+		#len (xs) : list size, xx: 100 * 12, ys: 100 * 2
 		return xs + [ys]
 
 
@@ -129,7 +130,8 @@ def load_from_folders_offline(simulation_dirs):
 
 def load_from_one_folder_offline(simulation_dir):
 	runtime_files = glob.glob(os.path.join(simulation_dir, 'runtimes/*'), recursive=False)
-	resource_file = os.path.join(simulation_dir, 'resource_spec.yml')
+	resource_file = os.path.join(simulation_dir, 'resource_spec.yml') # base.py line 271 Keyerror: 'block1_conv1/kernel:0'
+	#resource_file = '/home/jongho/autodist/examples/resource_spec.yml'  #
 
 	print("Searched runtime files: {}".format(len(runtime_files)))
 	X = []
@@ -171,6 +173,7 @@ def main(args, sim_model_params):
 
 	# Create features
 	strategy_resource_files, Y = load_from_folders_offline(data_dir)
+	print(strategy_resource_files[0])
 	print("Createing features...")
 	X = []
 	prev_resource_file = None
@@ -191,7 +194,9 @@ def main(args, sim_model_params):
 	# Create model
 	W = tf.Variable(tf.random.uniform([args.hidden_dim, 1]), name='W', dtype=tf.float32)
 	b = tf.Variable(0.0, name='b', dtype=tf.float32)
+	#print("W shape: {}, b shape {} ".format(W.shape, b.shape)) #(12,1)
 	if model_version == 'v2':
+		#print("model version : {}".format(model_version))
 		W0 = tf.Variable(tf.random.uniform([args.hidden_dim, args.hidden_dim]), name='W0', dtype=tf.float32)
 		b0 = tf.Variable(0.0, name='b0', dtype=tf.float32)
 	loss_fn = tfr.losses.make_loss_fn(RankingLossKeys[ranking_loss_key])
@@ -235,10 +240,14 @@ def main(args, sim_model_params):
 		return losses, accs
 
 	@tf.function
-	def eval_step(input):
+	def eval_step(input):  # input: [input, label]
 		logits = forward(input[:-1])
 		preds = tf.squeeze(tf.argmax(logits, axis=1))
 		labels = tf.squeeze(tf.argmax(input[-1], axis=1))
+		#print("input[0] {}, [1]: {}, [2]: {}".format(input[0].shape, input[1].shape, input[2].shape))
+		#[100,12], [100,12], [100,2]
+		#print("logits shape: {}, preds shape : {}, labels : {}".format(len(input), logits.shape, preds.shape, labels.shape))
+		#logits shape: (100, 2), preds shape : (100,), labels : (100,)
 		acc = tf.equal(preds, labels)
 		return acc, labels, preds, input[-1], logits
 
@@ -340,7 +349,7 @@ def main(args, sim_model_params):
 
 def get_args_parser():
 	parser = argparse.ArgumentParser(add_help=False)
-	parser.add_argument("-ms", "--model_to_sim", default='bert', type=str, help="")
+	parser.add_argument("-ms", "--model_to_sim", default='vgg16', type=str, help="")
 	parser.add_argument("-sc", "--simulation_config", default='config', type=str, help="")
 	parser.add_argument("-hd", "--hidden_dim", default=12, type=int, help="")
 	parser.add_argument("-es", "--epochs", default=100, type=int, help="")
