@@ -93,7 +93,7 @@ class TFRIterator:
 		ys = []
 		for i in range(self.batch_size):
 			y =[]
-			for j in range(self.list_size):
+			for j in range(self.list_size): # list size = 2
 				ri = np.random.randint(self.n)
 				rx = self.X[ri]
 				ry = self.Y[ri]
@@ -105,8 +105,8 @@ class TFRIterator:
 		ys = np.array(ys, dtype=np.float32)
 		if self.split == 'train': # normalize y as its used for loss weights.
 			ys = (ys * self.scale - self.baseline)
-		#print("len(xs) : {}, xs shape {}, ys shape {} ".format(len(xs), xs[0].shape, ys.shape))
-		#len (xs) : list size, xx: 100 * 12, ys: 100 * 2
+		#print("len(xs) : {}, xs[0] shape {}, xs[1]shape : {}, ys shape {} ".format(len(xs), xs[0].shape, xs[1].shape, ys.shape))
+		#len (xs) : 2, xs[0], xs[1]: (batch size) * 12, ys: (batch size) * 2
 		return xs + [ys]
 
 
@@ -190,7 +190,9 @@ def main(args, sim_model_params):
 			X.append(x)
 	X = np.array(X, dtype=np.float)
 	print("Finished createing features.")
-
+	#print("X element: {}".format(X[0]))
+	#print("X shape: {}, Y shape: {}".format(X.shape, Y.shape))
+	# X: (200,12) Y: (200, )
 	# Create model
 	W = tf.Variable(tf.random.uniform([args.hidden_dim, 1]), name='W', dtype=tf.float32)
 	b = tf.Variable(0.0, name='b', dtype=tf.float32)
@@ -227,7 +229,7 @@ def main(args, sim_model_params):
 				gradients = tape.gradient(loss, vs)
 				train_op = optimizer.apply_gradients(zip(gradients, vs))
 			pred = tf.squeeze(tf.argmax(logits, axis=1))
-			labels = tf.squeeze(tf.argmax(input[-1], axis=1))
+			labels = tf.squeeze(tf.argmax(input[-1], axis=1))  #why argmax? b/c loss function에서 argmax를 주는 듯
 			acc = tf.equal(pred, labels)
 			return loss, acc
 

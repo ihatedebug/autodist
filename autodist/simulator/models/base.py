@@ -265,9 +265,6 @@ class SimulatorBase:
         meta = defaultdict()
         for node in strategy.node_config:
             var_name = node.var_name
-            # for var_op, var in self._original_graph_item.trainable_var_op_to_var.items():
-            #     if var.name == var_name:
-            #         break
             var = name2var[var_name]
             var_helper = VariableHelper(var, self._original_graph_item)
             if node.partitioner:

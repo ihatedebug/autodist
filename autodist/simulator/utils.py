@@ -120,6 +120,7 @@ def get_max_num_local_replica(replicas, cluster):
 		num_local_replica = sum(1 for d in replica_devices
 								if cluster.get_address_from_task(d.job, d.task) == host)
 		max_num_local_replica = max(max_num_local_replica, num_local_replica)
+	#print("max num local replica:", max_num_local_replica)
 	return max_num_local_replica
 
 

@@ -171,7 +171,7 @@ class PredefinedSimulator(SimulatorBase):
 			   + [sum_device_ps_sync_time[key] for key in feature_keys] \
 			   + [max_group_ar_sync_time[key] for key in feature_keys] \
 			   + [sum_group_ar_sync_time[key] for key in feature_keys]
-		#print("feat", feat)  위에 4개가 concat 됨
+		print("feat", feat) # 위에 4개가 concat 됨
 		return feat
 
 	def predefined_sync_time(self, strategy, resource_spec):
